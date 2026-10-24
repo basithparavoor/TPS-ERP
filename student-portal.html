@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Learner Portal — THAIBA PUBLIC SCHOOL</title>
+  <link rel="icon" type="image/png" href="./tps-logo.png">
+  <link rel="apple-touch-icon" href="./tps-logo.png">
+  <link rel="stylesheet" href="app.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="ambient-mesh">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <div style="min-height: 100vh; display: flex; flex-direction: column;">
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <span class="brand-badge" style="padding: 6px 12px; font-size: 0.95rem;">TPS</span>
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">
+          Student Learner Portal
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-info" id="portal-topbar-badge">—</span>
+        <button class="icon-btn" id="btn-logout" title="Sign Out"><i data-lucide="log-out"></i></button>
+      </div>
+    </header>
+
+    <div class="app-viewport">
+      <div style="max-width: 1100px; margin: 0 auto;">
+        <!-- Welcome Card -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; border: 3px solid #3b82f6; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
+              <i data-lucide="user" style="width: 36px; height: 36px; color: #2563eb;"></i>
+            </div>
+            <div>
+              <h2 style="font-size: 1.4rem;" id="portal-student-name">—</h2>
+              <p style="color: var(--text-muted); font-size: 0.88rem;" id="portal-student-meta">
+                Admission No: <span class="font-mono" style="font-weight: 600;">—</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-emerald"><i data-lucide="check-circle-2"></i></div>
+            <div class="kpi-meta"><h3 id="portal-attendance">—</h3><p>Attendance Record</p></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-blue"><i data-lucide="award"></i></div>
+            <div class="kpi-meta"><h3 id="portal-aggregate">—</h3><p>Academic Standing</p></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-amber"><i data-lucide="book-open"></i></div>
+            <div class="kpi-meta"><h3 id="portal-homework-count">0</h3><p>Active Homework</p></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-rose"><i data-lucide="receipt"></i></div>
+            <div class="kpi-meta"><h3 id="portal-fee">—</h3><p>Fee Status</p></div>
+          </div>
+        </div>
+
+        <!-- Student Tabs Grid -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+          <div>
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-header">
+                <h3 class="card-title">My Academic Timetable</h3>
+                <span class="badge badge-info" id="portal-timetable-status">Class Schedule</span>
+              </div>
+              <table class="tms-table font-mono" style="font-size: 0.85rem;">
+                <thead>
+                  <tr><th>Period</th><th>Subject</th><th>Teacher</th><th>Room</th></tr>
+                </thead>
+                <tbody id="portal-timetable-rows">
+                  <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading schedule...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Term Assessment Reports</h3>
+                <span class="badge badge-info" id="portal-exam-status">Evaluation</span>
+              </div>
+              <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px;">Official verified grades released by Examination Office.</p>
+              <div id="portal-exam-rows" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                <i data-lucide="inbox" style="width:40px;height:40px;display:block;margin:0 auto 10px;"></i>
+                No exam records published for this session yet.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom: 24px;">
+              <h3 class="card-title" style="margin-bottom: 14px;">Digital ID &amp; QR Card</h3>
+              <div style="text-align: center;">
+                <div id="portal-qr-container" style="width: 120px; height: 120px; background: #ffffff; border: 1.5px solid var(--border-color); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 10px; padding: 6px; box-shadow: var(--shadow-xs);">
+                  <div id="portal-qr"></div>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Scan at Campus Gate &amp; Attendance Terminal</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title" style="margin-bottom: 12px;">Pending Homework &amp; Diary</h3>
+              <div id="portal-homework-rows" style="font-size: 0.85rem;">
+                <div style="text-align: center; color: var(--text-muted); padding: 24px;">
+                  <i data-lucide="inbox" style="width:36px;height:36px;display:block;margin:0 auto 10px; color: var(--text-subtle);"></i>
+                  No pending homework tasks assigned.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authService } from './auth-service.js';
+    import { dbService } from './supabase-client.js';
+    import { UIComponents } from './ui-components.js';
+    import { TMS_CONFIG } from './config.js';
+    import { brandingService } from './branding-service.js';
+    import { QRCodeGenerator } from './qr-generator.js';
+
+    (async () => {
+      brandingService.refresh();
+      await authService.init();
+      const user = authService.getCurrentUser();
+      const allowed = user && [TMS_CONFIG.roles.STUDENT, TMS_CONFIG.roles.ADMIN].includes(user.role);
+
+      if (!allowed) {
+        window.location.href = user ? 'index.html#/dashboard' : 'login.html';
+        return;
+      }
+
+      UIComponents.initTheme();
+      UIComponents.refreshIcons();
+
+      const logoutBtn = document.getElementById('btn-logout');
+      if (logoutBtn) logoutBtn.addEventListener('click', () => authService.logout());
+
+      const esc = (v) => UIComponents.escapeHtml(v);
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      };
+
+      try {
+        const students = await dbService.select('students');
+        const student = students.find(s => s.userId === user.id || s.id === user.id || s.email === user.email) || students[0] || null;
+
+        if (!student) {
+          setText('portal-student-name', 'No Student Record Linked');
+          UIComponents.refreshIcons();
+          return;
+        }
+
+        setText('portal-student-name', student.fullName || '—');
+        setText('portal-topbar-badge', `${student.grade || '—'} - Section ${student.section || '—'} (Roll #${student.rollNo || '—'})`);
+
+        const metaEl = document.getElementById('portal-student-meta');
+        if (metaEl) {
+          metaEl.innerHTML = `Admission No: <span class="font-mono" style="font-weight: 600;">${esc(student.admissionNo)}</span> • Class: <strong>${esc(student.grade)} (${esc(student.section || 'A')})</strong>`;
+        }
+
+        // Render QR Code
+        const qrEl = document.getElementById('portal-qr');
+        if (qrEl) {
+          QRCodeGenerator.render(qrEl, student.admissionNo || 'TMS-STUDENT', {
+            width: 108,
+            height: 108,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff'
+          });
+        }
+
+        // 1. Fee Balance
+        const invoices = await dbService.select('invoices');
+        const due = invoices
+          .filter(inv => inv.studentId === student.id || inv.studentName === student.fullName)
+          .reduce((sum, inv) => sum + (parseFloat(inv.balance) || 0), 0);
+        setText('portal-fee', due > 0 ? `₹ ${due.toLocaleString()} Due` : 'All Cleared');
+
+        // 2. Attendance Summary
+        const attendance = await dbService.select('attendance_records');
+        const studentPunches = attendance.filter(a => a.studentId === student.id || a.studentAdmissionNo === student.admissionNo);
+        if (studentPunches.length) {
+          const present = studentPunches.filter(a => a.status === 'present').length;
+          const pct = Math.round((present / studentPunches.length) * 100);
+          setText('portal-attendance', `${pct}% Present`);
+        } else {
+          setText('portal-attendance', '100% Present');
+        }
+
+        // 3. Timetable
+        const timetables = await dbService.select('timetables');
+        const classSlots = timetables.filter(t => t.grade === student.grade);
+        const tbRows = document.getElementById('portal-timetable-rows');
+        if (tbRows) {
+          if (classSlots.length) {
+            tbRows.innerHTML = classSlots.slice(0, 7).map((slot, i) => `
+              <tr>
+                <td><strong>Period ${slot.period || (i + 1)}</strong></td>
+                <td style="color: #BF9A33; font-weight: 700;">${esc(slot.subject || 'General')}</td>
+                <td>${esc(slot.teacherName || 'Faculty')}</td>
+                <td>${esc(slot.room || 'Room ' + (slot.section || 'A'))}</td>
+              </tr>
+            `).join('');
+          } else {
+            tbRows.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No class timetable schedule published for ${esc(student.grade)}.</td></tr>`;
+          }
+        }
+
+        // 4. Homework / Assignments
+        const assignments = await dbService.select('assignments');
+        const myHomework = assignments.filter(a => a.grade === student.grade);
+        setText('portal-homework-count', String(myHomework.length));
+        const hwEl = document.getElementById('portal-homework-rows');
+        if (hwEl) {
+          if (myHomework.length) {
+            hwEl.innerHTML = myHomework.slice(0, 5).map(hw => `
+              <div style="padding: 10px 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <div>
+                  <div style="font-weight: 700; color: var(--text-main);">${esc(hw.title || hw.subject)}</div>
+                  <div style="font-size: 0.76rem; color: var(--text-muted);">Due: ${esc(hw.dueDate || 'Tomorrow')} • ${esc(hw.subject || 'Academics')}</div>
+                </div>
+                <span class="badge badge-info" style="font-size: 0.72rem;">Pending</span>
+              </div>
+            `).join('');
+          } else {
+            hwEl.innerHTML = `
+              <div style="text-align: center; color: var(--text-muted); padding: 24px;">
+                <i data-lucide="check-circle" style="width:36px;height:36px;display:block;margin:0 auto 10px; color: #16a34a;"></i>
+                All assignments completed!
+              </div>
+            `;
+          }
+        }
+
+        // 5. Exam Assessments
+        const assessments = await dbService.select('exam_assessments');
+        const myGrades = assessments.filter(e => e.studentId === student.id || e.admissionNo === student.admissionNo);
+        const examEl = document.getElementById('portal-exam-rows');
+        if (examEl) {
+          if (myGrades.length) {
+            examEl.innerHTML = `
+              <table class="tms-table" style="font-size: 0.85rem; text-align: left;">
+                <thead><tr><th>Subject</th><th>Marks</th><th>Max</th><th>Grade</th></tr></thead>
+                <tbody>
+                  ${myGrades.map(g => `
+                    <tr>
+                      <td><strong>${esc(g.subject)}</strong></td>
+                      <td>${esc(g.marksObtained)}</td>
+                      <td>${esc(g.maxMarks || 100)}</td>
+                      <td><span class="badge badge-success">${esc(g.grade || 'A')}</span></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            `;
+            setText('portal-aggregate', 'Grade A');
+          } else {
+            setText('portal-aggregate', 'In Progress');
+          }
+        }
+
+      } catch (e) {
+        console.error('Student portal hydration failed:', e);
+      }
+
+      UIComponents.refreshIcons();
+    })();
+  </script>
+</body>
+</html>

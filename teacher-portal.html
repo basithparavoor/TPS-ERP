@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Portal — THAIBA PUBLIC SCHOOL</title>
+  <link rel="icon" type="image/png" href="./tps-logo.png">
+  <link rel="apple-touch-icon" href="./tps-logo.png">
+  <link rel="stylesheet" href="app.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="ambient-mesh">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <div style="min-height: 100vh; display: flex; flex-direction: column;">
+    <!-- Faculty Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <a href="index.html#/my-work" class="brand-badge" style="padding: 6px 12px; font-size: 0.95rem;">TPS FACULTY</a>
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">
+          Faculty & Staff Workspace
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-info"><i data-lucide="layout-grid" style="width: 12px; height: 12px;"></i> Faculty Workspace</span>
+        <a href="index.html#/dashboard" class="btn btn-secondary btn-sm"><i data-lucide="layout-dashboard"></i> Main ERP</a>
+        <button class="icon-btn" id="btn-logout" title="Sign Out"><i data-lucide="log-out"></i></button>
+      </div>
+    </header>
+
+    <div class="app-viewport" id="teacher-portal-viewport">
+      <!-- Injected MyWorkModule -->
+    </div>
+  </div>
+
+  <script type="module">
+    import { MyWorkModule } from './my-work-module.js';
+    import { authService } from './auth-service.js';
+    import { UIComponents } from './ui-components.js';
+    import { TMS_CONFIG } from './config.js';
+    import { brandingService } from './branding-service.js';
+
+    (async () => {
+      brandingService.refresh();
+      await authService.init();
+      const user = authService.getCurrentUser();
+      const staffRoles = [
+        TMS_CONFIG.roles.ADMIN, TMS_CONFIG.roles.PRINCIPAL, TMS_CONFIG.roles.COORDINATOR,
+        TMS_CONFIG.roles.TEACHER, TMS_CONFIG.roles.HR, TMS_CONFIG.roles.FINANCE,
+        TMS_CONFIG.roles.LIBRARIAN
+      ];
+      const allowed = user && staffRoles.includes(user.role);
+
+      if (!allowed) {
+        window.location.href = user ? 'index.html#/dashboard' : 'login.html';
+        return;
+      }
+
+      UIComponents.initTheme();
+
+      const logoutBtn = document.getElementById('btn-logout');
+      if (logoutBtn) logoutBtn.addEventListener('click', () => authService.logout());
+
+      const viewport = document.getElementById('teacher-portal-viewport');
+      MyWorkModule.render(viewport);
+    })();
+  </script>
+</body>
+</html>

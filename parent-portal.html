@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Portal — THAIBA PUBLIC SCHOOL</title>
+  <link rel="icon" type="image/png" href="./tps-logo.png">
+  <link rel="apple-touch-icon" href="./tps-logo.png">
+  <link rel="stylesheet" href="app.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="ambient-mesh">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <div style="min-height: 100vh; display: flex; flex-direction: column;">
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <span class="brand-badge" style="padding: 6px 12px; font-size: 0.95rem;">TPS</span>
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">
+          Parent &amp; Guardian Portal
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" id="notification-bell" title="Notifications" style="position: relative;">
+          <i data-lucide="bell"></i>
+          <span id="notification-badge" class="badge badge-danger" style="display: none; position: absolute; top: -4px; right: -4px; font-size: 0.58rem; padding: 1px 5px; line-height: 1.4;">0</span>
+        </button>
+        <button class="icon-btn" id="btn-logout" title="Sign Out"><i data-lucide="log-out"></i></button>
+      </div>
+    </header>
+
+    <div class="app-viewport">
+      <div style="max-width: 1000px; margin: 0 auto;" id="parent-content">
+        <div class="card"><p style="text-align:center; color:var(--text-muted); padding:40px;">Loading your portal…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authService } from './auth-service.js';
+    import { UIComponents } from './ui-components.js';
+    import { TMS_CONFIG } from './config.js';
+    import { admissionService } from './admission-service.js';
+    import { notificationService } from './notification-service.js';
+    import { NotificationCenter } from './notification-center.js';
+    import { brandingService } from './branding-service.js';
+
+    const esc = (v) => UIComponents.escapeHtml(v);
+    const fmtDate = (v) => { if (!v) return '—'; const d = new Date(v); return isNaN(d.getTime()) ? '—' : d.toLocaleString('en-GB'); };
+    const fmtMoney = (v) => `₹ ${Number(v || 0).toLocaleString('en-IN')}`;
+
+    const STEPS = ['Submitted', 'Under Verification', 'Approved'];
+
+    function stepper(status) {
+      if (status === 'Rejected') {
+        return `<div style="background: rgba(239,68,68,0.08); border-left:4px solid #ef4444; padding:12px; border-radius:8px; font-weight:600; color:#b91c1c;">
+          <i data-lucide="x-circle" style="width:16px;height:16px;vertical-align:middle;"></i> Application Rejected</div>`;
+      }
+      const current = STEPS.indexOf(status === 'Submitted' ? 'Submitted' : status);
+      return `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        ${STEPS.map((s, i) => {
+          const done = i <= current;
+          return `<span class="badge ${done ? 'badge-success' : 'badge-info'}" style="padding:6px 12px; opacity:${done ? 1 : 0.5};">${esc(s)}</span>${i < STEPS.length - 1 ? '<i data-lucide="arrow-right" style="width:14px;height:14px;color:var(--text-subtle);"></i>' : ''}`;
+        }).join('')}
+      </div>`;
+    }
+
+    function applicationCard(a) {
+      const payments = Array.isArray(a.payments) ? a.payments : [];
+      const ledger = payments.length
+        ? payments.map((p) => `<tr><td>${fmtDate(p.date)}</td><td>${esc(p.mode)}</td><td>${esc(p.reference || '—')}</td><td style="text-align:right;">${fmtMoney(p.amount)}</td></tr>`).join('')
+        : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No payments recorded.</td></tr>';
+
+      return `
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 class="card-title">${esc(a.studentName || 'Applicant')}</h3>
+              <p class="card-desc">Form No <span class="font-mono">${esc(a.appId || a.id)}</span> • Applied for ${esc(a.grade || '—')} • ${fmtDate(a.createdAt)}</p>
+            </div>
+            <span class="badge ${a.paymentStatus === 'Paid' ? 'badge-success' : (a.paymentStatus === 'Pending' ? 'badge-warning' : 'badge-info')}">
+              Payment: ${esc(a.paymentStatus || '—')}
+            </span>
+          </div>
+
+          <div style="margin: 12px 0 18px;">${stepper(a.status)}</div>
+
+          ${a.remarks ? `<div style="background:var(--bg-subtle); padding:12px; border-radius:8px; font-size:0.86rem; margin-bottom:14px;">
+            <strong>Remarks from the school:</strong> ${esc(a.remarks)}</div>` : ''}
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div>
+              <h4 style="font-size:0.92rem; margin-bottom:8px; color:#15803d;">Fee Summary</h4>
+              <table class="tms-table" style="font-size:0.83rem;"><tbody>
+                ${(a.feeItems || []).map((f) => `<tr><th style="text-align:left;">${esc(f.name)}</th><td style="text-align:right;">${fmtMoney(f.amount)}</td></tr>`).join('') || '<tr><td style="color:var(--text-muted);">No fees.</td></tr>'}
+                <tr><th style="text-align:left;">Total</th><td style="text-align:right; font-weight:800;">${fmtMoney(a.feeTotal)}</td></tr>
+              </tbody></table>
+            </div>
+            <div>
+              <h4 style="font-size:0.92rem; margin-bottom:8px; color:#15803d;">Payment Ledger</h4>
+              <table class="tms-table" style="font-size:0.83rem;">
+                <thead><tr><th>Date</th><th>Mode</th><th>Reference</th><th style="text-align:right;">Amount</th></tr></thead>
+                <tbody>${ledger}</tbody>
+              </table>
+              ${a.paymentRef ? `<p style="font-size:0.78rem; color:var(--text-muted); margin-top:6px;">UPI reference on file: <span class="font-mono">${esc(a.paymentRef)}</span></p>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function notificationCard(n) {
+      return `
+        <div style="padding:12px; border:1px solid var(--border-color); border-left:4px solid ${n.isRead ? 'var(--border-color)' : '#BF9A33'}; border-radius:8px; margin-bottom:10px; background:${n.isRead ? 'transparent' : 'rgba(191,154,51,0.06)'};">
+          <div style="display:flex; justify-content:space-between; gap:10px;">
+            <strong style="font-size:0.92rem;">${esc(n.title)}</strong>
+            <span class="badge ${n.priority === 'Urgent' ? 'badge-danger' : (n.priority === 'High' ? 'badge-warning' : 'badge-info')}">${esc(n.priority || 'Normal')}</span>
+          </div>
+          <p style="font-size:0.84rem; color:var(--text-muted); margin-top:6px; white-space:pre-wrap;">${esc(n.message)}</p>
+          <div style="font-size:0.72rem; color:var(--text-subtle); margin-top:6px;">${fmtDate(n.createdAt)}</div>
+        </div>`;
+    }
+
+    (async () => {
+      await authService.init();
+      const user = authService.getCurrentUser();
+      const allowed = user && [TMS_CONFIG.roles.PARENT, TMS_CONFIG.roles.ADMIN].includes(user.role);
+
+      if (!allowed) {
+        window.location.href = user ? 'index.html#/dashboard' : 'login.html';
+        return;
+      }
+
+      UIComponents.initTheme();
+      brandingService.refresh();
+      const logoutBtn = document.getElementById('btn-logout');
+      if (logoutBtn) logoutBtn.addEventListener('click', () => authService.logout());
+
+      await NotificationCenter.init();
+
+      const content = document.getElementById('parent-content');
+      let apps = [];
+      let notifications = [];
+      try {
+        [apps, notifications] = await Promise.all([
+          admissionService.listApplicationsForParent(user.id, user.email),
+          notificationService.listForUser()
+        ]);
+      } catch (e) {
+        console.error(e);
+      }
+
+      content.innerHTML = `
+        <div class="card" style="margin-bottom: 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div>
+              <h2 style="font-size: 1.3rem;">Welcome, ${esc(user.name)}</h2>
+              <p style="color: var(--text-muted); font-size: 0.85rem;">
+                Track your admission applications and school notifications here.
+              </p>
+            </div>
+            <span class="badge badge-info">${apps.length} application(s)</span>
+          </div>
+        </div>
+
+        <h3 style="font-size:1.1rem; margin-bottom:14px;">My Applications</h3>
+        ${apps.length ? apps.map(applicationCard).join('') : `
+          <div class="card" style="text-align:center; padding:40px; margin-bottom:24px;">
+            <i data-lucide="file-search" style="width:44px;height:44px;display:block;margin:0 auto 10px;color:var(--text-subtle);"></i>
+            <p style="color:var(--text-muted);">No applications are linked to your account yet.</p>
+          </div>`}
+
+        <h3 style="font-size:1.1rem; margin:24px 0 14px;">Notifications</h3>
+        ${notifications.length ? notifications.map(notificationCard).join('') : `
+          <div class="card" style="text-align:center; padding:30px;">
+            <p style="color:var(--text-muted);">No notifications right now.</p>
+          </div>`}
+      `;
+
+      UIComponents.refreshIcons();
+    })();
+  </script>
+</body>
+</html>

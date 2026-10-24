@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online Admission Portal — THAIBA PUBLIC SCHOOL</title>
+  <link rel="icon" type="image/png" href="./tps-logo.png">
+  <link rel="apple-touch-icon" href="./tps-logo.png">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#BF9A33">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TPS ERP">
+  <link rel="stylesheet" href="app.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body style="min-height: 100vh; padding: 24px 16px; background-color: var(--bg-canvas);">
+  <div class="ambient-mesh">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <div style="max-width: 900px; margin: 0 auto; position: relative; z-index: 10;">
+
+    <!-- Top Action Nav -->
+    <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+      <a href="login.html" class="btn btn-secondary btn-sm">
+        <i data-lucide="arrow-left"></i> Authorized Staff Login
+      </a>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="entry-by-badge" class="badge badge-success" style="display: none;"></span>
+        <button class="btn btn-secondary btn-sm" id="btn-show-guidelines" style="display: none;">
+          <i data-lucide="book-open"></i> General Guidelines
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-show-fees" style="display: none;">
+          <i data-lucide="receipt"></i> Fee Structure
+        </button>
+      </div>
+    </div>
+
+    <!-- Interactive Admission Form -->
+    <div class="card no-print" id="interactive-form-card" style="box-shadow: var(--shadow-lg); padding: 32px 28px; margin-bottom: 30px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div id="portal-emblem-container" style="margin-bottom: 8px;"></div>
+        <h2 id="dyn-form-title" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">
+          Admission Application Form
+        </h2>
+        <p style="color: #BF9A33; font-weight: 700; font-size: 0.88rem;">
+          <span id="dyn-form-subtitle">Run by : Thaiba Heritage, Kolkata</span> • Academic Session: <span id="dyn-session-text">2027 - 2028</span>
+        </p>
+      </div>
+
+      <form id="tms-admission-form">
+        <!-- Student Photograph -->
+        <div id="student-photo-panel" style="margin-bottom: 22px;"></div>
+
+        <div id="dynamic-form-container"></div>
+
+        <!-- Declaration -->
+        <div style="background: rgba(191, 154, 51, 0.06); border: 1px solid #BF9A33; border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; margin-top: 20px;">
+          <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 0.88rem; line-height: 1.5;">
+            <input type="checkbox" id="declaration-check" required style="margin-top: 4px;">
+            <span>
+              <strong>Declaration:</strong> I hereby declare that all information furnished above are true and correct to the best of my knowledge and belief. I agree to abide by the rules and discipline of THAIBA PUBLIC SCHOOL.
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.05rem;" id="btn-submit-admission">
+          <i data-lucide="check-circle-2"></i> Submit Application &amp; Generate Printable A4 Form
+        </button>
+      </form>
+    </div>
+
+    <!-- PRINTABLE A4 PREVIEW -->
+    <div id="a4-document-wrapper" style="display: none;">
+      <div class="no-print" style="margin-bottom: 16px; text-align: center; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="window.print()" style="font-size: 1rem; padding: 12px 24px;">
+          <i data-lucide="printer"></i> Print / Save as PDF
+        </button>
+        <button class="btn btn-secondary" id="btn-back-to-form">
+          <i data-lucide="edit"></i> Back to Form
+        </button>
+      </div>
+
+      <!-- Credentials highlight (screen only) -->
+      <div class="card no-print" id="credentials-screen-card" style="margin-bottom: 18px; border-left: 4px solid #f59e0b; display: none;"></div>
+
+      <div class="a4-preview-container" id="printable-a4-area">
+        <div id="a4-header-slot"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; font-size: 12px;">
+          <div style="flex: 1;">
+            <strong>Form No :</strong> <span class="font-mono" id="a4-form-no" style="font-size: 14px; font-weight: 800; border-bottom: 1px dotted #000; padding: 0 10px;">—</span>
+          </div>
+          <div style="flex: 2; text-align: center;">
+            <h2 id="a4-form-title" style="font-size: 16px; font-weight: 800; text-transform: uppercase; margin: 0; text-decoration: underline;">
+              Admission Application Form
+            </h2>
+            <div style="font-size: 11.5px; font-weight: 700; margin-top: 2px;">
+              Academic Session : <span id="a4-session-text">2027 - 2028</span>
+            </div>
+          </div>
+          <div style="width: 130px; text-align: right; font-size: 9px;">
+            <div id="a4-photo" style="width: 100px; height: 124px; border: 1px solid #000; margin-left: auto; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 8.5px; line-height: 1.25; background: #fafafa; overflow: hidden;">
+              Affix recent<br>passport-size<br>photograph
+            </div>
+            <div id="a4-entry-by" style="margin-top: 4px; font-size: 9px;"></div>
+          </div>
+        </div>
+
+        <div id="a4-details-slot"></div>
+
+        <div id="a4-credentials-slot"></div>
+
+        <div id="a4-fee-slot"></div>
+
+        <div style="margin-bottom: 12px;">
+          <div style="font-size: 11px; font-weight: 800; text-align: center; text-decoration: underline;">Declaration</div>
+          <p style="font-size: 9.5px; text-align: justify; margin: 3px 0 20px;">
+            I hereby declare that all information furnished above are true and correct to the best of my knowledge and belief.
+          </p>
+          <table style="width: 100%; font-size: 10.5px;">
+            <tr>
+              <td style="width: 30%;">
+                Date : <span id="a4-date">—</span><br>
+                Place : Tapan
+              </td>
+              <td style="width: 35%; text-align: center;">
+                _________________________<br>
+                <strong>Signature of the Student</strong>
+              </td>
+              <td style="width: 35%; text-align: right;">
+                _________________________<br>
+                <strong>Signature of the Guardian</strong>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="perforated-cut"></div>
+
+        <!-- Tear-Off Slip: ADMIT CARD -->
+        <div style="border: 1.5px solid #000; padding: 10px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1; text-align: center;">
+              <h3 id="admit-slip-title" style="font-size: 14px; font-weight: 800; text-transform: uppercase; margin: 0; text-decoration: underline;">
+                ADMIT CARD
+              </h3>
+              <div id="admit-slip-school" style="font-size: 11px; font-weight: 700;">THAIBA PUBLIC SCHOOL</div>
+              <div id="admit-slip-address" style="font-size: 9px; color: #333;">Baghait, Tapan, Dakshin Dinajpur • Contact : +91 8653382851, +91 8167782851</div>
+            </div>
+            <div id="admit-photo" style="width: 85px; height: 100px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 8px; text-align: center; background: #fafafa; margin-left: 10px; overflow: hidden;">
+              Passport size photo
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; margin-top: 4px;">
+            <div><strong>Form No. :</strong> <span id="admit-form-no" class="font-mono" style="font-weight: 700;">—</span></div>
+            <div><strong>Application Portal :</strong> <span class="font-mono">Online</span></div>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 6px; border: 1px solid #000;">
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px; width: 32%;"><strong>Student Name :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px; font-weight: 700;" id="admit-name">—</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px;"><strong>Father / Guardian :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px;" id="admit-father">—</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px;"><strong>Address :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px;" id="admit-address">—</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px;"><strong>Contact No. :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px;" id="admit-contact">—</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px;"><strong>Applying for class :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px; font-weight: 700;" id="admit-class">—</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px;"><strong>Portal Username :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px; font-weight: 700;" id="admit-username">—</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 4px;"><strong>Admission Test Centre :</strong></td>
+              <td style="border: 1px solid #000; padding: 4px;" id="admit-slip-centre">THAIBA PUBLIC SCHOOL, Baghait, Tapan, Dakshin Dinajpur</td>
+            </tr>
+          </table>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 24px; font-size: 10px;">
+            <div style="text-align: center;">
+              __________________________<br>
+              <strong>Signature of Authority</strong>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { TMS_CONFIG } from './config.js';
+    import { auditService } from './audit-service.js';
+    import { UIComponents } from './ui-components.js';
+    import { TMS_LOGO } from './logo.js';
+    import { authService } from './auth-service.js';
+    import { admissionService, DEFAULT_INSTRUCTIONS, DEFAULT_POPUP_INSTRUCTIONS, renderVideoPlayerHtml, getEmbedVideoUrl } from './admission-service.js';
+    import { brandingService } from './branding-service.js';
+    import { checkMigration } from './migration-check.js';
+
+    const esc = (v) => UIComponents.escapeHtml(v);
+
+    UIComponents.initTheme();
+    brandingService.refresh().then(() => {
+      document.getElementById('portal-emblem-container').innerHTML = TMS_LOGO.emblemSvg(56);
+      document.getElementById('a4-header-slot').innerHTML = TMS_LOGO.printHeaderSvg();
+    });
+    checkMigration();
+    UIComponents.refreshIcons();
+    document.getElementById('portal-emblem-container').innerHTML = TMS_LOGO.emblemSvg(56);
+    document.getElementById('a4-header-slot').innerHTML = TMS_LOGO.printHeaderSvg();
+
+    let settings = null;
+    let fields = [];
+    let fees = [];
+    let staffUser = null;
+    let lastResult = null;
+
+    function groupBySection(list) {
+      const map = new Map();
+      list.forEach((f) => {
+        const s = f.section || 'General';
+        if (!map.has(s)) map.set(s, []);
+        map.get(s).push(f);
+      });
+      return map;
+    }
+
+    const PHOTO_KEY = 'photo';
+
+    /** The photograph field: an admin-defined file field, or a built-in default. */
+    function resolvePhotoField() {
+      const existing = fields.find((f) => (f.fieldType || 'text') === 'file'
+        && (f.fieldKey === PHOTO_KEY || /photo|photograph/i.test(String(f.label || ''))));
+      if (existing) return existing;
+      return {
+        fieldKey: PHOTO_KEY,
+        label: 'Student Photograph',
+        fieldType: 'file',
+        section: 'Photo & Documents',
+        required: false,
+        helpText: 'Recent passport-size photograph (JPG or PNG, up to 2 MB). It is printed on the application form and the admit card.'
+      };
+    }
+
+    /** All form fields, always including the photograph field. */
+    function allFields() {
+      const photo = resolvePhotoField();
+      const has = fields.some((f) => f.fieldKey === photo.fieldKey);
+      return has ? fields : [...fields, photo];
+    }
+
+    function fieldInputHtml(f) {
+      const id = `fld-${f.fieldKey}`;
+      const req = f.required ? 'required' : '';
+      const ph = esc(f.placeholder || '');
+      const type = f.fieldType || 'text';
+      let control = '';
+
+      if (type === 'textarea') {
+        control = `<textarea class="form-input" id="${id}" rows="2" placeholder="${ph}" ${req}></textarea>`;
+      } else if (type === 'select') {
+        const opts = (f.options || []).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+        control = `<select class="form-select" id="${id}" ${req}><option value="">— Select —</option>${opts}</select>`;
+      } else if (type === 'checkbox') {
+        control = `<label style="display:flex;gap:8px;align-items:center;font-size:0.88rem;"><input type="checkbox" id="${id}"> ${esc(f.helpText || f.label)}</label>`;
+      } else if (type === 'file') {
+        control = `<input type="file" class="form-input" id="${id}" accept="image/*,.pdf" ${req}>
+          <span class="file-name" data-for="${id}" style="font-size:0.74rem;color:var(--text-subtle);display:block;margin-top:4px;"></span>
+          <span class="file-preview" data-for="${id}"></span>`;
+      } else {
+        control = `<input type="${type}" class="form-input${type === 'tel' || type === 'number' ? ' font-mono' : ''}" id="${id}" placeholder="${ph}" ${req}>`;
+      }
+
+      return `
+        <div class="form-group">
+          <label class="form-label">${esc(f.label)} ${f.required ? '<span style="color:#dc2626;">*</span>' : ''}</label>
+          ${control}
+          ${f.helpText && type !== 'checkbox' ? `<span style="font-size:0.72rem;color:var(--text-subtle);">${esc(f.helpText)}</span>` : ''}
+        </div>`;
+    }
+
+    /** Prominent passport-photo capture block shown above the form sections. */
+    function renderPhotoPanel(photo) {
+      const panel = document.getElementById('student-photo-panel');
+      if (!panel) return;
+
+      panel.innerHTML = `
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #15803d; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 16px;">
+          Student Photograph ${photo.required ? '<span style="color:#dc2626;">*</span>' : ''}
+        </h3>
+        <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+          <div id="photo-drop" title="Click to upload a photo" style="width:132px;height:162px;border:1.5px dashed var(--border-color);border-radius:10px;background:var(--bg-subtle);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;text-align:center;padding:6px;">
+            <div id="photo-placeholder" style="font-size:0.7rem;color:var(--text-subtle);line-height:1.35;">
+              <i data-lucide="camera" style="width:26px;height:26px;display:block;margin:0 auto 6px;"></i>
+              Click to upload<br>passport-size photo
+            </div>
+            <img id="photo-preview-img" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <input type="file" class="form-input" id="fld-${photo.fieldKey}" accept="image/*" ${photo.required ? 'required' : ''}>
+            <span class="file-name font-mono" data-for="fld-${photo.fieldKey}" style="font-size:0.74rem;color:var(--text-subtle);display:block;margin-top:6px;"></span>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="photo-pick"><i data-lucide="upload"></i> Choose Photo</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="photo-remove" style="color:#ef4444;"><i data-lucide="trash-2"></i> Remove</button>
+            </div>
+            <p style="font-size:0.72rem;color:var(--text-subtle);margin-top:8px;">
+              ${esc(photo.helpText || 'Recent passport-size photograph, JPG or PNG up to 2 MB.')}
+            </p>
+          </div>
+        </div>
+      `;
+
+      const input = panel.querySelector(`#fld-${photo.fieldKey}`);
+      const drop = panel.querySelector('#photo-drop');
+      const img = panel.querySelector('#photo-preview-img');
+      const placeholder = panel.querySelector('#photo-placeholder');
+      const nameEl = panel.querySelector(`.file-name[data-for="fld-${photo.fieldKey}"]`);
+
+      const clearPreview = () => {
+        img.style.display = 'none';
+        img.removeAttribute('src');
+        placeholder.style.display = 'block';
+      };
+
+      drop.addEventListener('click', () => input.click());
+      panel.querySelector('#photo-pick').addEventListener('click', () => input.click());
+      panel.querySelector('#photo-remove').addEventListener('click', () => {
+        input.value = '';
+        if (nameEl) nameEl.innerText = '';
+        clearPreview();
+      });
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        if (!file) { clearPreview(); if (nameEl) nameEl.innerText = ''; return; }
+        if (nameEl) nameEl.innerText = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        if (file.type.startsWith('image/')) {
+          img.src = URL.createObjectURL(file);
+          img.style.display = 'block';
+          placeholder.style.display = 'none';
+        } else {
+          clearPreview();
+        }
+      });
+      UIComponents.refreshIcons();
+    }
+
+    function renderForm() {
+      const container = document.getElementById('dynamic-form-container');
+      const photo = resolvePhotoField();
+      const rest = allFields().filter((f) => f.fieldKey !== photo.fieldKey);
+      const groups = groupBySection(rest);
+      let sectionNo = 0;
+      let html = '';
+      groups.forEach((list, section) => {
+        sectionNo += 1;
+        html += `<h3 style="font-size: 1.05rem; font-weight: 700; color: #15803d; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 16px;">
+          ${sectionNo}. ${esc(section)}
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          ${list.map(fieldInputHtml).join('')}
+        </div>`;
+      });
+      container.innerHTML = html;
+
+      container.querySelectorAll('input[type="file"]').forEach((inp) => {
+        inp.addEventListener('change', () => {
+          const nameEl = container.querySelector(`.file-name[data-for="${inp.id}"]`);
+          const prevEl = container.querySelector(`.file-preview[data-for="${inp.id}"]`);
+          const file = inp.files && inp.files[0];
+          if (!file) {
+            if (nameEl) nameEl.innerText = '';
+            if (prevEl) prevEl.innerHTML = '';
+            return;
+          }
+          if (nameEl) nameEl.innerText = `Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+          if (prevEl && file.type.startsWith('image/')) {
+            const url = URL.createObjectURL(file);
+            prevEl.innerHTML = `<img src="${url}" alt="preview" style="max-width:84px; max-height:104px; border:1px solid var(--border-color); border-radius:6px; margin-top:6px; display:block;">`;
+          } else if (prevEl) {
+            prevEl.innerHTML = '';
+          }
+        });
+      });
+
+      renderPhotoPanel(photo);
+    }
+
+    function renderPortalHeader() {
+      const formTitle = settings.formTitle || 'Admission Application Form';
+      const formSubtitle = settings.formSubtitle || 'Run by : Thaiba Heritage, Kolkata';
+      const sessionText = settings.session || '—';
+      const admitTitle = settings.admitCardTitle || 'ADMIT CARD';
+      const admitSchool = settings.admitCardSubtitle || 'THAIBA PUBLIC SCHOOL';
+      const admitAddress = settings.admitCardAddress || 'Baghait, Tapan, Dakshin Dinajpur • Contact : +91 8653382851, +91 8167782851';
+      const admitCentre = settings.testCentre || settings.admissionTestCentre || 'THAIBA PUBLIC SCHOOL, Baghait, Tapan, Dakshin Dinajpur';
+
+      const elDynTitle = document.getElementById('dyn-form-title');
+      if (elDynTitle) elDynTitle.innerText = formTitle;
+
+      const elDynSub = document.getElementById('dyn-form-subtitle');
+      if (elDynSub) elDynSub.innerText = formSubtitle;
+
+      const elDynSess = document.getElementById('dyn-session-text');
+      if (elDynSess) elDynSess.innerText = sessionText;
+
+      const elA4Title = document.getElementById('a4-form-title');
+      if (elA4Title) elA4Title.innerText = formTitle;
+
+      const elA4Sess = document.getElementById('a4-session-text');
+      if (elA4Sess) elA4Sess.innerText = sessionText;
+
+      const elAdmitTitle = document.getElementById('admit-slip-title');
+      if (elAdmitTitle) elAdmitTitle.innerText = admitTitle;
+
+      const elAdmitSchool = document.getElementById('admit-slip-school');
+      if (elAdmitSchool) elAdmitSchool.innerText = admitSchool;
+
+      const elAdmitAddr = document.getElementById('admit-slip-address');
+      if (elAdmitAddr) elAdmitAddr.innerText = admitAddress;
+
+      const elAdmitCentre = document.getElementById('admit-slip-centre');
+      if (elAdmitCentre) elAdmitCentre.innerText = admitCentre;
+
+      const a4HeaderSlot = document.getElementById('a4-header-slot');
+      if (a4HeaderSlot) {
+        a4HeaderSlot.innerHTML = TMS_LOGO.printHeaderSvg({
+          title: admitSchool,
+          subtitle: formSubtitle,
+          address: admitAddress
+        });
+      }
+
+      const btnGuidelines = document.getElementById('btn-show-guidelines');
+      if (btnGuidelines) {
+        btnGuidelines.style.display = settings.showGuidelines ? 'inline-flex' : 'none';
+      }
+
+      const btnFees = document.getElementById('btn-show-fees');
+      if (btnFees) {
+        btnFees.style.display = settings.showFeeStructure ? 'inline-flex' : 'none';
+      }
+    }
+
+    function openFeeStructureModal() {
+      const activeFees = (fees || []).filter((f) => f.isActive !== false);
+      const rows = activeFees.length
+        ? activeFees.map((f, i) => `
+            <tr>
+              <td style="font-weight:600; width:35px; text-align:center;">${i + 1}</td>
+              <td>
+                <strong>${esc(f.name)}</strong>
+                ${f.description ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${esc(f.description)}</div>` : ''}
+              </td>
+              <td style="text-align:center;">
+                ${f.mandatory ? '<span class="badge badge-warning" style="font-size:0.65rem;">Mandatory</span>' : '<span class="badge badge-info" style="font-size:0.65rem;">Optional</span>'}
+              </td>
+              <td style="text-align:right; font-weight:700; font-family:var(--font-mono); font-size:1rem; color:#16a34a;">
+                ₹ ${Number(f.amount || 0).toLocaleString('en-IN')}
+              </td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="4" style="text-align:center; padding:24px; color:var(--text-muted);">No fee schedule configured for this session.</td></tr>';
+
+      const totalMandatory = activeFees.filter((f) => f.mandatory).reduce((s, f) => s + Number(f.amount || 0), 0);
+
+      const bodyHtml = `
+        <div style="margin-bottom:12px;">
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 14px;">
+            Official admission fee schedule for Academic Session <strong>${esc(settings.session || 'Current')}</strong>.
+          </p>
+          <div class="table-responsive">
+            <table class="tms-table" style="font-size:0.85rem;">
+              <thead>
+                <tr>
+                  <th style="width:35px; text-align:center;">#</th>
+                  <th>Fee Particulars</th>
+                  <th style="text-align:center;">Type</th>
+                  <th style="text-align:right;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+              ${activeFees.length ? `
+                <tfoot>
+                  <tr style="border-top:2px solid var(--border-color); font-weight:700;">
+                    <td colspan="3" style="text-align:right; padding:10px;">Mandatory Admission Total :</td>
+                    <td style="text-align:right; padding:10px; font-size:1.05rem; color:#16a34a; font-family:var(--font-mono);">
+                      ₹ ${totalMandatory.toLocaleString('en-IN')}
+                    </td>
+                  </tr>
+                </tfoot>` : ''}
+            </table>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:14px; line-height:1.4;">
+            * Note: Admission fees are payable directly at the THAIBA PUBLIC SCHOOL accounts desk upon document verification. No online payment is collected through this application form.
+          </p>
+        </div>
+      `;
+
+      UIComponents.openModal({
+        title: `Admission Fee Schedule — Session ${settings.session || ''}`,
+        bodyHtml,
+        footerHtml: ''
+      });
+      UIComponents.refreshIcons();
+    }
+
+    function openGuidelinesModal() {
+      const instructions = Array.isArray(settings.instructions) && settings.instructions.length
+        ? settings.instructions
+        : DEFAULT_INSTRUCTIONS;
+
+      const hasVideo = settings.showInstructionVideo !== false && !!(settings.instructionVideoUrl && settings.instructionVideoUrl.trim());
+      const videoHtml = hasVideo ? renderVideoPlayerHtml(settings.instructionVideoUrl, settings.instructionVideoTitle || 'Admission Process Video Walkthrough', settings.instructionVideoRatio || 'auto') : '';
+
+      const items = instructions.map((item, idx) => `
+        <li style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px; font-size:0.88rem; line-height:1.5;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:rgba(22,163,74,0.12); color:#16a34a; font-weight:700; font-size:0.8rem; flex-shrink:0;">${idx + 1}</span>
+          <span style="padding-top:2px;">${esc(item)}</span>
+        </li>
+      `).join('');
+
+      const bodyHtml = `
+        <div>
+          ${videoHtml}
+          ${hasVideo ? `<div style="font-weight:700; font-size:0.95rem; margin:16px 0 8px; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+            <i data-lucide="list-checks" style="width:18px; height:18px; color:#16a34a;"></i> Step-by-Step Instructions &amp; Guidelines:
+          </div>` : ''}
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 16px;">
+            Please read these guidelines thoroughly before completing your admission application:
+          </p>
+          <ul style="list-style:none; padding:0; margin:0;">
+            ${items}
+          </ul>
+          <div style="background:rgba(59,130,246,0.06); border:1px solid #bfdbfe; border-radius:8px; padding:12px; margin-top:16px; font-size:0.82rem; color:#1e40af;">
+            <i data-lucide="info" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;"></i>
+            After submission, you will receive an official <strong>Form No.</strong> and printable application form with your admit card tear-off slip.
+          </div>
+        </div>
+      `;
+
+      UIComponents.openModal({
+        title: 'General Guidelines & Admission Instructions',
+        bodyHtml,
+        footerHtml: ''
+      });
+      UIComponents.refreshIcons();
+    }
+
+    function readValues() {
+      const values = {};
+      allFields().forEach((f) => {
+        const type = f.fieldType || 'text';
+        if (type === 'file') return;
+        const el = document.getElementById(`fld-${f.fieldKey}`);
+        if (!el) return;
+        if (type === 'checkbox') values[f.fieldKey] = el.checked ? 'Yes' : 'No';
+        else values[f.fieldKey] = (el.value || '').trim();
+      });
+      return values;
+    }
+
+    async function uploadAttachments(values, formNo) {
+      const folder = `admissions/${String(formNo).replace(/[^A-Za-z0-9]/g, '-')}`;
+      for (const f of allFields()) {
+        if ((f.fieldType || 'text') !== 'file') continue;
+        const input = document.getElementById(`fld-${f.fieldKey}`);
+        const file = input && input.files && input.files[0];
+        if (!file) { values[f.fieldKey] = ''; continue; }
+        const path = `${folder}/${f.fieldKey}-${Date.now()}-${admissionService.sanitizeFileName(file.name)}`;
+        // eslint-disable-next-line no-await-in-loop
+        const res = await admissionService.uploadFile('admission-docs', path, file);
+        if (res.error) {
+          UIComponents.showToast(`Could not upload "${f.label}": ${res.error}`, 'warning');
+          values[f.fieldKey] = '';
+        } else {
+          values[f.fieldKey] = res.path;
+        }
+      }
+    }
+
+    function pick(values, keys, fallback = '—') {
+      for (const k of keys) {
+        if (values[k]) return values[k];
+      }
+      return fallback;
+    }
+
+    function a4DetailsHtml(values) {
+      const photoKey = resolvePhotoField().fieldKey;
+      const groups = groupBySection(allFields().filter((f) => f.fieldKey !== photoKey));
+      let html = '';
+      groups.forEach((list, section) => {
+        html += `<div style="font-size:12px;font-weight:800;text-decoration:underline;margin:8px 0 4px;">${esc(section)} :</div>
+          <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:6px;">`;
+        list.forEach((f) => {
+          const val = values[f.fieldKey];
+          const isFile = (f.fieldType || 'text') === 'file';
+          const shown = isFile
+            ? (val ? String(val).split('/').pop() : 'Not attached')
+            : (val ? esc(val) : '\u2014');
+          html += `<tr>
+            <td style="width:38%;padding:3px 0;"><strong>${esc(f.label)}${f.required ? ' <span style="color:red;">*</span>' : ''} :</strong></td>
+            <td style="padding:3px 0;"><span style="border-bottom:1px solid #000;display:inline-block;min-width:150px;padding:0 6px;">${shown}</span></td>
+          </tr>`;
+        });
+        html += '</table>';
+      });
+      html += `<div style="font-size:12px;font-weight:800;text-decoration:underline;margin:8px 0 4px;">Photograph :</div>
+        <div style="font-size:10.5px;padding:3px 0;">
+          ${values[photoKey]
+            ? 'Attached — see the photograph box at the top right of this form.'
+            : 'Not attached — affix a recent passport-size photograph in the box provided above.'}
+        </div>`;
+      return html;
+    }
+
+    /** Show the uploaded student photograph in the A4 form and admit card. */
+    async function applyA4Photo(values) {
+      const boxes = [document.getElementById('a4-photo'), document.getElementById('admit-photo')].filter(Boolean);
+      boxes.forEach((b) => {
+        if (!b.dataset.placeholder) b.dataset.placeholder = b.innerHTML;
+        b.innerHTML = b.dataset.placeholder;
+      });
+
+      const path = (values && values[resolvePhotoField().fieldKey]) || '';
+      if (!path) return;
+      const url = await admissionService.getSignedUrl('admission-docs', path, 3600);
+      if (!url) return;
+      boxes.forEach((b) => {
+        b.innerHTML = `<img src="${esc(url)}" alt="Student photograph" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+      });
+    }
+
+    function a4FeeHtml(data) {
+      const chosen = data.feeItems || [];
+      if (!chosen.length) return '';
+      const rows = chosen.map((f) => `<tr><td style="padding:2px 4px;">${esc(f.name)}</td><td style="padding:2px 4px;text-align:right;">₹ ${Number(f.amount || 0).toLocaleString('en-IN')}</td></tr>`).join('');
+      return `<div style="margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:800;text-decoration:underline;margin-bottom:4px;">Fee &amp; Payment :</div>
+        <table style="width:60%;font-size:10.5px;border-collapse:collapse;">
+          ${rows}
+          <tr><td style="padding:2px 4px;border-top:1px solid #000;font-weight:800;">Total</td><td style="padding:2px 4px;border-top:1px solid #000;text-align:right;font-weight:800;">₹ ${Number(data.feeTotal || 0).toLocaleString('en-IN')}</td></tr>
+          <tr><td style="padding:2px 4px;">Status</td><td style="padding:2px 4px;text-align:right;">${esc(data.paymentStatus || '—')}${data.paymentRef ? ` (Ref: ${esc(data.paymentRef)})` : ''}</td></tr>
+        </table>
+      </div>`;
+    }
+
+    function a4CredentialsHtml(creds) {
+      if (!creds) return '';
+      return `<div style="border:1.5px dashed #b45309;padding:8px;margin-bottom:10px;background:#fffbeb;">
+        <div style="font-size:11.5px;font-weight:800;text-decoration:underline;">Parent Login Credentials (for admission status tracking)</div>
+        <table style="width:100%;font-size:10.5px;margin-top:4px;">
+          <tr><td style="width:20%;"><strong>Username :</strong></td><td class="font-mono" style="font-weight:700;">${esc(creds.username)}</td>
+              <td style="width:20%;"><strong>Password :</strong></td><td class="font-mono" style="font-weight:700;">${esc(creds.password)}</td></tr>
+        </table>
+        <div style="font-size:9px;margin-top:3px;">Login at the school portal with these credentials to track your admission status and receive notifications. Keep them confidential.</div>
+      </div>`;
+    }
+
+    function populateA4(result) {
+      const values = result.values;
+      document.getElementById('a4-form-no').innerText = result.formNo;
+      document.getElementById('admit-form-no').innerText = result.formNo;
+      document.getElementById('a4-details-slot').innerHTML = a4DetailsHtml(values);
+      document.getElementById('a4-credentials-slot').innerHTML = a4CredentialsHtml(result.credentials);
+      document.getElementById('a4-fee-slot').innerHTML = a4FeeHtml(result.application || {});
+      document.getElementById('a4-date').innerText = new Date().toLocaleDateString('en-GB');
+      document.getElementById('a4-entry-by').innerText = result.entryBy ? `Entered by: ${result.entryBy}` : '';
+
+      const name = pick(values, ['candidateName', 'studentName', 'name']);
+      const father = pick(values, ['fatherName', 'guardianName', 'motherName']);
+      const village = pick(values, ['village', 'address'], '');
+      const pin = pick(values, ['pin'], '');
+      document.getElementById('admit-name').innerText = name;
+      document.getElementById('admit-father').innerText = father;
+      document.getElementById('admit-address').innerText = `${village} ${pin ? '- ' + pin : ''}`.trim() || '—';
+      document.getElementById('admit-contact').innerText = pick(values, ['phone', 'mobile']);
+      document.getElementById('admit-class').innerText = pick(values, ['applyingClass', 'grade']);
+      document.getElementById('admit-username').innerText = result.credentials ? result.credentials.username : '—';
+    }
+
+    function showCredentialsCard(creds, accountError) {
+      const card = document.getElementById('credentials-screen-card');
+      if (!creds) { card.style.display = 'none'; return; }
+      card.style.display = 'block';
+      card.innerHTML = `
+        <div class="card-header">
+          <h3 class="card-title" style="color:#b45309;"><i data-lucide="key-round"></i> Parent Login Credentials — Please Note Down</h3>
+        </div>
+        <p style="font-size:0.84rem;color:var(--text-muted);margin-bottom:10px;">
+          These credentials let you track your admission status and receive school notifications. They are also printed on the form below.
+        </p>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;">
+          <div><span style="font-size:0.76rem;color:var(--text-subtle);display:block;">Username</span><strong class="font-mono" style="font-size:1.1rem;">${esc(creds.username)}</strong></div>
+          <div><span style="font-size:0.76rem;color:var(--text-subtle);display:block;">Password</span><strong class="font-mono" style="font-size:1.1rem;">${esc(creds.password)}</strong></div>
+        </div>
+        ${accountError ? `
+          <div style="margin-top:14px;padding:10px 12px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;font-size:0.8rem;">
+            <strong>Note:</strong> the online login could not be activated automatically.<br>
+            ${esc(accountError)}<br>
+            Your application is recorded — please show this username to the school office so they can activate it.
+          </div>` : ''}`;
+      UIComponents.refreshIcons();
+    }
+
+    function setFormBusy(busy) {
+      const btn = document.getElementById('btn-submit-admission');
+      btn.disabled = busy;
+      btn.innerHTML = busy
+        ? '<i data-lucide="loader-2" class="spin"></i> Processing Application...'
+        : '<i data-lucide="check-circle-2"></i> Submit Application &amp; Generate Printable A4 Form';
+      UIComponents.refreshIcons();
+    }
+
+    function showSubmissionModal(res) {
+      const formNo = res.formNo;
+      const creds = res.credentials;
+      const values = res.values || {};
+      const studentName = pick(values, ['candidateName', 'studentName', 'name']);
+      const applyingClass = pick(values, ['applyingClass', 'grade']);
+      const instructions = Array.isArray(settings && settings.popupInstructions) && settings.popupInstructions.length
+        ? settings.popupInstructions
+        : DEFAULT_POPUP_INSTRUCTIONS;
+
+      const instrItems = instructions.map((item, idx) => `
+        <li style="display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; font-size:0.86rem; line-height:1.45; color:var(--text-main);">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:rgba(22,163,74,0.14); color:#16a34a; font-weight:700; font-size:0.75rem; flex-shrink:0; margin-top:1px;">${idx + 1}</span>
+          <span>${esc(item)}</span>
+        </li>
+      `).join('');
+
+      const bodyHtml = `
+        <div style="text-align:center; padding: 4px 0 16px;">
+          <div style="width:58px; height:58px; border-radius:50%; background:rgba(22, 163, 74, 0.12); color:#16a34a; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px;">
+            <i data-lucide="check-circle-2" style="width:36px; height:36px;"></i>
+          </div>
+          <h3 style="font-size:1.3rem; font-weight:800; color:var(--text-main); margin:0 0 6px;">Application Submitted Successfully!</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Your admission application has been registered in the institution portal.</p>
+        </div>
+
+        <!-- Unique Application ID Highlight Box -->
+        <div style="background:var(--bg-subtle); border:2px dashed #16a34a; border-radius:12px; padding:16px 20px; margin-bottom:18px; text-align:center;">
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
+            Your Unique Application ID / Form Number
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
+            <span class="font-mono" style="font-size:1.45rem; font-weight:800; color:#15803d; letter-spacing:0.5px;" id="popup-app-id-text">${esc(formNo)}</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-popup-id" title="Copy Application ID" style="padding:4px 10px; font-size:0.78rem;">
+              <i data-lucide="copy"></i> Copy ID
+            </button>
+          </div>
+          <div style="margin-top:10px; font-size:0.84rem; color:var(--text-main); display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+            <span><strong>Student:</strong> ${esc(studentName)}</span>
+            ${applyingClass && applyingClass !== '—' ? `<span><strong>Applying For:</strong> Class ${esc(applyingClass)}</span>` : ''}
+          </div>
+        </div>
+
+        ${creds ? `
+          <!-- Parent Portal Login Details -->
+          <div style="background:rgba(245, 158, 11, 0.08); border:1px solid #f59e0b; border-radius:10px; padding:12px 16px; margin-bottom:18px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="key-round" style="width:16px; height:16px; color:#d97706;"></i>
+                <strong style="font-size:0.86rem; color:#b45309;">Parent Portal Login Credentials</strong>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-popup-creds" style="padding:2px 8px; font-size:0.72rem;">
+                <i data-lucide="copy"></i> Copy Login
+              </button>
+            </div>
+            <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:0.85rem;">
+              <div><span style="color:var(--text-muted); font-size:0.75rem; display:block;">Username / Student ID</span><strong class="font-mono" style="color:var(--text-main);">${esc(creds.username)}</strong></div>
+              <div><span style="color:var(--text-muted); font-size:0.75rem; display:block;">Password</span><strong class="font-mono" style="color:var(--text-main);">${esc(creds.password)}</strong></div>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+              Use these credentials to log in to the school portal to track verification, admission status and announcements.
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Admin-Configured Popup Instructions -->
+        <div style="background:var(--bg-canvas); border:1px solid var(--border-color); border-radius:10px; padding:14px 16px; margin-bottom:6px;">
+          <div style="font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            <i data-lucide="clipboard-list" style="width:16px; height:16px; color:#16a34a;"></i>
+            Important Next Steps &amp; Guidelines
+          </div>
+          <ul style="list-style:none; padding:0; margin:0;">
+            ${instrItems}
+          </ul>
+        </div>
+      `;
+
+      const footerHtml = `
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary" id="btn-popup-close-done">
+            Close
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-popup-print-now" style="padding:10px 20px;">
+            <i data-lucide="printer"></i> View &amp; Print A4 Form / Admit Card
+          </button>
+        </div>
+      `;
+
+      UIComponents.openModal({
+        title: 'Application Confirmation',
+        bodyHtml,
+        footerHtml,
+        maxWidth: '620px'
+      });
+
+      const copyBtn = document.getElementById('btn-copy-popup-id');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(formNo).then(() => {
+            UIComponents.showToast('Application ID copied to clipboard!', 'success');
+          }).catch(() => {
+            UIComponents.showToast(`Application ID: ${formNo}`, 'info');
+          });
+        });
+      }
+
+      const copyCredsBtn = document.getElementById('btn-copy-popup-creds');
+      if (copyCredsBtn && creds) {
+        copyCredsBtn.addEventListener('click', () => {
+          const text = `Username: ${creds.username}\nPassword: ${creds.password}`;
+          navigator.clipboard.writeText(text).then(() => {
+            UIComponents.showToast('Credentials copied to clipboard!', 'success');
+          }).catch(() => {});
+        });
+      }
+
+      const printBtn = document.getElementById('btn-popup-print-now');
+      if (printBtn) {
+        printBtn.addEventListener('click', () => {
+          UIComponents.closeModal();
+          document.getElementById('interactive-form-card').style.display = 'none';
+          document.getElementById('a4-document-wrapper').style.display = 'block';
+          window.scrollTo(0, 0);
+        });
+      }
+
+      const doneBtn = document.getElementById('btn-popup-close-done');
+      if (doneBtn) {
+        doneBtn.addEventListener('click', () => {
+          UIComponents.closeModal();
+          document.getElementById('interactive-form-card').style.display = 'none';
+          document.getElementById('a4-document-wrapper').style.display = 'block';
+          window.scrollTo(0, 0);
+        });
+      }
+
+      UIComponents.refreshIcons();
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      setFormBusy(true);
+      try {
+        const values = readValues();
+        const preFormNo = admissionService.generateFormNo();
+        await uploadAttachments(values, preFormNo);
+
+        const result = await admissionService.submitApplication({
+          values,
+          selectedFeeIds: [],
+          paymentMode: '',
+          paymentRef: '',
+          submittedBy: staffUser,
+          formNo: preFormNo
+        });
+
+        if (result.application && result.application._syncError) {
+          throw new Error(result.application._syncError);
+        }
+
+        const formNo = result.application.appId;
+        await auditService.log('ONLINE_ADMISSION_REGISTERED', 'ADMISSIONS', {
+          formNo,
+          student: values.candidateName || values.studentName || 'Applicant',
+          grade: values.applyingClass || values.grade || '',
+          submittedBy: staffUser ? staffUser.name : 'Public'
+        }, formNo);
+
+        lastResult = { ...result, values, formNo, entryBy: staffUser ? staffUser.name : null };
+        populateA4(lastResult);
+        await applyA4Photo(values);
+        showCredentialsCard(result.credentials, result.accountError);
+
+        document.getElementById('interactive-form-card').style.display = 'none';
+        document.getElementById('a4-document-wrapper').style.display = 'block';
+        window.scrollTo(0, 0);
+
+        showSubmissionModal(lastResult);
+
+        UIComponents.showToast(`Application ${formNo} registered successfully!`, 'success');
+        if (result.accountError) {
+          UIComponents.showToast(`Parent portal login note: ${result.accountError}`, 'warning');
+        }
+      } catch (err) {
+        console.error(err);
+        UIComponents.showToast(`Submission failed: ${err.message}`, 'danger');
+      } finally {
+        setFormBusy(false);
+      }
+    }
+
+    async function boot() {
+      try {
+        [settings, fields, fees] = await Promise.all([
+          admissionService.loadSettings(),
+          admissionService.listFields(),
+          admissionService.listFees()
+        ]);
+      } catch (e) {
+        console.error('Admission config load failed:', e);
+        UIComponents.showToast('Could not load admission configuration. Please refresh.', 'danger');
+      }
+
+      try {
+        const user = await authService.init();
+        if (user && user.role && user.role !== 'parent' && user.role !== 'pending') {
+          staffUser = user;
+          const badge = document.getElementById('entry-by-badge');
+          badge.style.display = 'inline-flex';
+          badge.innerText = `Entered by: ${user.name}`;
+        }
+      } catch (e) { /* public visitor */ }
+
+      renderPortalHeader();
+      renderForm();
+      UIComponents.refreshIcons();
+
+      document.getElementById('tms-admission-form').addEventListener('submit', handleSubmit);
+      
+      const btnGuidelines = document.getElementById('btn-show-guidelines');
+      if (btnGuidelines) {
+        btnGuidelines.addEventListener('click', openGuidelinesModal);
+      }
+      const btnFees = document.getElementById('btn-show-fees');
+      if (btnFees) {
+        btnFees.addEventListener('click', openFeeStructureModal);
+      }
+
+      document.getElementById('btn-back-to-form').addEventListener('click', () => {
+        document.getElementById('a4-document-wrapper').style.display = 'none';
+        document.getElementById('interactive-form-card').style.display = 'block';
+        window.scrollTo(0, 0);
+      });
+    }
+
+    boot();
+  </script>
+</body>
+</html>

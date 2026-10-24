@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — THAIBA PUBLIC SCHOOL</title>
+  <link rel="icon" type="image/png" href="./tps-logo.png">
+  <link rel="apple-touch-icon" href="./tps-logo.png">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#BF9A33">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TPS ERP">
+  <link rel="stylesheet" href="app.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
+  <div class="ambient-mesh">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <div style="max-width: 450px; width: 100%; position: relative; z-index: 10;">
+    <div class="card" style="box-shadow: var(--shadow-lg); border-radius: var(--radius-lg); padding: 36px 32px;">
+      
+      <!-- Official School Brand Header -->
+      <div id="login-brand-container" style="text-align: center; margin-bottom: 28px;">
+        <!-- Logo injected by script -->
+      </div>
+
+      <div style="text-align: center; margin-bottom: 24px;">
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Sign in with your authorized institutional credentials</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="tms-login-form">
+        <div class="form-group">
+          <label class="form-label">Email or Username</label>
+          <div style="position: relative;">
+            <input type="text" class="form-input" id="login-email" required placeholder="cmbasith786@gmail.com or parent username" autofocus style="padding-left: 40px;">
+            <i data-lucide="user" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted);"></i>
+          </div>
+          <span style="font-size:0.72rem; color:var(--text-subtle);">Parents: sign in using the username printed on your admission form.</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="margin-bottom: 0;">Password</label>
+            <a href="javascript:void(0)" id="btn-forgot-password" style="font-size: 0.78rem; color: #BF9A33; font-weight: 600;">Forgot Password?</a>
+          </div>
+          <div style="position: relative;">
+            <input type="password" class="form-input" id="login-password" required placeholder="••••••••••••" style="padding-left: 40px;">
+            <i data-lucide="lock" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted);"></i>
+          </div>
+        </div>
+
+        <div id="login-error-msg" style="display: none; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; border-radius: var(--radius-md); font-size: 0.84rem; margin-bottom: 16px;"></div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem; margin-bottom: 14px;" id="btn-login-submit">
+          <i data-lucide="log-in"></i> Sign In to Portal
+        </button>
+
+        <!-- Divider -->
+        <div style="display: flex; align-items: center; margin: 16px 0; color: var(--text-muted); font-size: 0.78rem;">
+          <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+          <span style="padding: 0 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle);">or continue with</span>
+          <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+        </div>
+
+        <!-- Google Authentication Button -->
+        <button type="button" class="btn btn-secondary" id="btn-google-login" style="width: 100%; padding: 11px; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 10px; font-weight: 600; background: #ffffff; border: 1px solid var(--border-color); color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.2s ease;">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Sign In with Google</span>
+        </button>
+      </form>
+
+      <div style="margin-top: 20px; text-align: center; font-size: 0.75rem; color: var(--text-subtle);">
+        THAIBA PUBLIC SCHOOL • Run by Thaiba Heritage, Kolkata
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authService } from './auth-service.js';
+    import { UIComponents } from './ui-components.js';
+    import { TMS_LOGO } from './logo.js';
+    import { TMS_CONFIG } from './config.js';
+    import { dbService } from './supabase-client.js';
+    import { brandingService } from './branding-service.js';
+    import { checkMigration } from './migration-check.js';
+
+    UIComponents.initTheme();
+    brandingService.refresh();
+    checkMigration();
+
+    // Check if session exists (e.g., returning from Google OAuth or active token)
+    authService.init().then((user) => {
+      if (authService.isAuthenticated()) {
+        const u = authService.getCurrentUser() || {};
+        let redirectUrl = 'index.html#/dashboard';
+        if (u.role === TMS_CONFIG.roles.PARENT) redirectUrl = 'parent-portal.html';
+        else if (u.role === TMS_CONFIG.roles.STUDENT) redirectUrl = 'student-portal.html';
+        else if (u.role === TMS_CONFIG.roles.OFFICE_BOY) redirectUrl = 'index.html#/admissions-entry';
+        window.location.href = redirectUrl;
+      }
+    });
+
+    /**
+     * Resolve what the user typed into the account e-mail to authenticate with.
+     * Full e-mails are used as-is; short usernames are looked up in the shared
+     * `login_aliases` table (staff) and otherwise fall back to the parent
+     * username domain.
+     */
+    async function resolveLoginEmail(identifier) {
+      const value = String(identifier || '').trim();
+      if (!value) return value;
+      if (value.includes('@')) return value.toLowerCase();
+      const username = value.toLowerCase();
+      try {
+        const rows = await dbService.select('login_aliases');
+        const alias = rows.find((r) => String(r.username || '').toLowerCase() === username);
+        if (alias && alias.email) return alias.email.toLowerCase();
+      } catch (e) { /* ignore */ }
+      try {
+        const pcreds = await dbService.select('parent_credentials');
+        const pcred = pcreds.find((r) => String(r.username || '').toLowerCase() === username);
+        if (pcred && pcred.email) return pcred.email.toLowerCase();
+      } catch (e) { /* ignore */ }
+      try {
+        const screds = await dbService.select('staff_credentials');
+        const scred = screds.find((r) => String(r.username || '').toLowerCase() === username);
+        if (scred && scred.email) return scred.email.toLowerCase();
+      } catch (e) { /* ignore */ }
+      return `${username}@${TMS_CONFIG.parentEmailDomain}`;
+    }
+    document.getElementById('login-brand-container').innerHTML = `
+      <div style="display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+        ${TMS_LOGO.emblemSvg(64)}
+      </div>
+      <h1 style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); letter-spacing: 0.04em;">
+        THAIBA PUBLIC SCHOOL
+      </h1>
+      <div style="font-size: 0.75rem; color: #BF9A33; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">
+        Run by : Thaiba Heritage, Kolkata
+      </div>
+      <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+        Baghait, Tapan, Dakshin Dinajpur • Regd. No. : IV 01894/2011
+      </div>
+    `;
+    UIComponents.refreshIcons();
+
+    const form = document.getElementById('tms-login-form');
+    const errBox = document.getElementById('login-error-msg');
+    const submitBtn = document.getElementById('btn-login-submit');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Authenticating...`;
+      UIComponents.refreshIcons();
+
+      const identifier = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-password').value;
+
+      // Staff and parents sign in with a username; map it to the account e-mail.
+      const email = await resolveLoginEmail(identifier);
+
+      const res = await authService.login(email, pass);
+      if (res && res.success) {
+        UIComponents.showToast(`Welcome back, ${res.user.name}!`, 'success');
+        let redirectUrl = 'index.html#/dashboard';
+        if (res.user.role === TMS_CONFIG.roles.PARENT) {
+          redirectUrl = 'parent-portal.html';
+        } else if (res.user.role === TMS_CONFIG.roles.STUDENT) {
+          redirectUrl = 'student-portal.html';
+        } else if (res.user.role === TMS_CONFIG.roles.OFFICE_BOY) {
+          redirectUrl = 'index.html#/admissions-entry';
+        }
+
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 400);
+      } else {
+        errBox.innerText = res.error || 'Authentication failed. Please verify credentials.';
+        errBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i data-lucide="log-in"></i> Sign In to Portal`;
+        UIComponents.refreshIcons();
+      }
+    });
+
+    // Google OAuth Login
+    const googleBtn = document.getElementById('btn-google-login');
+    if (googleBtn) {
+      googleBtn.addEventListener('click', async () => {
+        googleBtn.disabled = true;
+        const originalHtml = googleBtn.innerHTML;
+        googleBtn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Connecting to Google...`;
+        UIComponents.refreshIcons();
+
+        try {
+          const res = await authService.loginWithGoogle();
+          if (!res.success) {
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = originalHtml;
+            UIComponents.refreshIcons();
+
+            const isNotEnabled = (res.error || '').toLowerCase().includes('not enabled') || (res.error || '').toLowerCase().includes('unsupported');
+            if (isNotEnabled) {
+              UIComponents.openModal({
+                title: 'Google Authentication Setup',
+                bodyHtml: `
+                  <div style="font-size:0.88rem; color:var(--text-main); line-height:1.5;">
+                    <div style="padding:12px; background:rgba(245,158,11,0.08); border-left:4px solid #f59e0b; border-radius:6px; margin-bottom:14px;">
+                      <strong>Google OAuth Provider is not enabled in Supabase yet.</strong>
+                    </div>
+                    <p style="color:var(--text-muted); margin-bottom:10px;">
+                      To enable Google 1-Click login for THAIBA PUBLIC SCHOOL:
+                    </p>
+                    <ol style="padding-left:18px; color:var(--text-muted); margin-bottom:14px; font-size:0.84rem;">
+                      <li style="margin-bottom:6px;">Go to your <strong>Supabase Dashboard</strong> &rarr; <strong>Authentication</strong> &rarr; <strong>Providers</strong> &rarr; <strong>Google</strong>.</li>
+                      <li style="margin-bottom:6px;">Toggle Google to <strong>Enabled</strong>.</li>
+                      <li style="margin-bottom:6px;">Enter your <strong>Google Client ID</strong> and <strong>Client Secret</strong> from Google Cloud Console.</li>
+                      <li style="margin-bottom:6px;">Add the authorized redirect URI: <code class="font-mono" style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:0.75rem; word-break:break-all;">https://bphjbvvapbefiyacfosm.supabase.co/auth/v1/callback</code></li>
+                    </ol>
+                    <p style="font-size:0.8rem; color:var(--text-subtle); margin:0;">
+                      Once enabled, any authorized institutional staff member can sign in directly with their Google Account.
+                    </p>
+                  </div>
+                `,
+                footerHtml: `<button class="btn btn-primary" onclick="document.getElementById('global-modal-close').click()">Understood</button>`
+              });
+            } else {
+              errBox.innerText = res.error || 'Google login failed.';
+              errBox.style.display = 'block';
+            }
+          }
+        } catch (err) {
+          googleBtn.disabled = false;
+          googleBtn.innerHTML = originalHtml;
+          UIComponents.refreshIcons();
+          errBox.innerText = err.message || 'Google login failed.';
+          errBox.style.display = 'block';
+        }
+      });
+    }
+
+    // Enhanced Account Recovery & Password Reset Gateway
+    document.getElementById('btn-forgot-password').addEventListener('click', (e) => {
+      e.preventDefault();
+      const currentIdent = document.getElementById('login-email').value.trim();
+
+      UIComponents.openModal({
+        title: 'Account Recovery & Password Reset',
+        bodyHtml: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <!-- Segmented Recovery Channel Switcher -->
+            <div class="tms-view-toggle" id="recovery-tab-toggle" style="display:flex; width:100%; margin-bottom:18px; border-radius:10px; background:var(--bg-hover); padding:3px;">
+              <button type="button" class="view-btn active" data-tab="parent" style="flex:1; justify-content:center; padding:8px 12px; font-size:0.85rem;">
+                <i data-lucide="graduation-cap"></i> Parent / Student
+              </button>
+              <button type="button" class="view-btn" data-tab="staff" style="flex:1; justify-content:center; padding:8px 12px; font-size:0.85rem;">
+                <i data-lucide="mail"></i> Staff / Admin (Email)
+              </button>
+              <button type="button" class="view-btn" data-tab="help" style="flex:1; justify-content:center; padding:8px 12px; font-size:0.85rem;">
+                <i data-lucide="message-circle"></i> Help Desk
+              </button>
+            </div>
+
+            <!-- Tab 1: Parent & Student Self-Service Verification -->
+            <div id="rec-tab-parent" class="rec-tab-content">
+              <div style="padding:10px 14px; background:rgba(191,154,51,0.08); border-left:4px solid #BF9A33; border-radius:6px; margin-bottom:14px; font-size:0.82rem; color:var(--text-main);">
+                <strong>Instant Self-Service Reset for Parents:</strong><br>
+                Verify with your student's Admission No or Application ID and registered mobile number to reset your password immediately.
+              </div>
+
+              <div id="parent-step-1">
+                <div class="form-group" style="margin-bottom:12px;">
+                  <label class="form-label">Admission No, Application ID, or Username *</label>
+                  <div style="position:relative;">
+                    <input type="text" class="form-input" id="inp-rec-parent-id" placeholder="e.g. TMS/2026/ADM-705611 or par70561103" value="${UIComponents.escapeHtml(currentIdent)}" style="padding-left:38px;">
+                    <i data-lucide="id-card" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-muted);"></i>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label class="form-label">Registered Guardian Mobile Number *</label>
+                  <div style="position:relative;">
+                    <input type="tel" class="form-input font-mono" id="inp-rec-parent-phone" placeholder="e.g. 7994531823" style="padding-left:38px;">
+                    <i data-lucide="phone" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-muted);"></i>
+                  </div>
+                </div>
+
+                <div id="parent-verify-msg" style="display:none; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:12px;"></div>
+
+                <button type="button" class="btn btn-primary" id="btn-parent-verify" style="width:100%; padding:10px;">
+                  <i data-lucide="shield-check"></i> Verify Student Details
+                </button>
+              </div>
+
+              <div id="parent-step-2" style="display:none;">
+                <div id="verified-student-card" style="padding:12px 14px; background:rgba(22,163,74,0.08); border:1px solid rgba(22,163,74,0.25); border-radius:10px; margin-bottom:14px;">
+                  <!-- Injected upon successful verification -->
+                </div>
+
+                <div class="form-group" style="margin-bottom:12px;">
+                  <label class="form-label">Set New Secure Password (min 6 characters) *</label>
+                  <div style="position:relative;">
+                    <input type="password" class="form-input font-mono" id="inp-parent-new-pass" placeholder="••••••••••••" minlength="6" style="padding-right:40px;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-parent-p1" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:3px 8px; border:none; background:transparent;"><i data-lucide="eye"></i></button>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                  <label class="form-label">Confirm New Password *</label>
+                  <div style="position:relative;">
+                    <input type="password" class="form-input font-mono" id="inp-parent-conf-pass" placeholder="••••••••••••" minlength="6" style="padding-right:40px;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-parent-p2" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:3px 8px; border:none; background:transparent;"><i data-lucide="eye"></i></button>
+                  </div>
+                </div>
+
+                <div id="parent-reset-msg" style="display:none; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:12px;"></div>
+
+                <button type="button" class="btn btn-primary" id="btn-parent-submit-reset" style="width:100%; padding:11px;">
+                  <i data-lucide="check-circle-2"></i> Update Password &amp; Ready to Login
+                </button>
+              </div>
+            </div>
+
+            <!-- Tab 2: Staff & Faculty Email Recovery -->
+            <div id="rec-tab-staff" class="rec-tab-content" style="display:none;">
+              <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">
+                Enter your registered institutional email or staff username. We will dispatch a secure password recovery link to your inbox.
+              </p>
+              <div class="form-group" style="margin-bottom:14px;">
+                <label class="form-label">Institutional Email or Staff Username *</label>
+                <div style="position:relative;">
+                  <input type="text" class="form-input" id="inp-forgot-ident" placeholder="e.g. cmbasith786@gmail.com or username" value="${UIComponents.escapeHtml(currentIdent)}" style="padding-left:38px;">
+                  <i data-lucide="mail" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-muted);"></i>
+                </div>
+              </div>
+
+              <div id="forgot-status-box" style="display:none; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:14px;"></div>
+
+              <button type="button" class="btn btn-primary" id="btn-submit-forgot" style="width:100%; padding:10px;">
+                <i data-lucide="send"></i> Send Email Recovery Link
+              </button>
+            </div>
+
+            <!-- Tab 3: Help Desk / WhatsApp Assistance -->
+            <div id="rec-tab-help" class="rec-tab-content" style="display:none; text-align:center; padding:10px 4px;">
+              <div style="width:52px; height:52px; border-radius:50%; background:rgba(37,211,102,0.1); color:#25D366; display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto;">
+                <i data-lucide="message-circle" style="width:26px; height:26px;"></i>
+              </div>
+              <h4 style="margin:0 0 6px 0; color:var(--text-main); font-size:1.05rem;">Direct Campus Helpline</h4>
+              <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:16px;">
+                Need help recovering your portal credentials? Connect directly with the Thaiba Public School administration desk on WhatsApp.
+              </p>
+              <a href="https://wa.me/917994531823?text=${encodeURIComponent('Hello Thaiba Public School Administration, I need assistance recovering my portal password.')}" target="_blank" class="btn btn-primary" style="background:#25D366; border-color:#25D366; width:100%; padding:11px; display:inline-flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+                <i data-lucide="send"></i> Message Admin on WhatsApp
+              </a>
+            </div>
+          </div>
+        `,
+        footerHtml: `
+          <button class="btn btn-secondary" onclick="document.getElementById('global-modal-close').click()">Close</button>
+        `
+      });
+
+      UIComponents.refreshIcons();
+
+      // Tab switcher wiring
+      const tabToggle = document.getElementById('recovery-tab-toggle');
+      if (tabToggle) {
+        tabToggle.querySelectorAll('.view-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            tabToggle.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            document.getElementById('rec-tab-parent').style.display = tab === 'parent' ? 'block' : 'none';
+            document.getElementById('rec-tab-staff').style.display = tab === 'staff' ? 'block' : 'none';
+            document.getElementById('rec-tab-help').style.display = tab === 'help' ? 'block' : 'none';
+          });
+        });
+      }
+
+      // --- Parent Self-Service Recovery Wiring ---
+      let verifiedParentData = null;
+      const parentVerifyBtn = document.getElementById('btn-parent-verify');
+      const parentVerifyMsg = document.getElementById('parent-verify-msg');
+      const parentStep1 = document.getElementById('parent-step-1');
+      const parentStep2 = document.getElementById('parent-step-2');
+
+      if (parentVerifyBtn) {
+        parentVerifyBtn.addEventListener('click', async () => {
+          const ident = document.getElementById('inp-rec-parent-id')?.value?.trim();
+          const phone = document.getElementById('inp-rec-parent-phone')?.value?.trim();
+
+          if (!ident || !phone) {
+            parentVerifyMsg.style.display = 'block';
+            parentVerifyMsg.style.background = '#fef2f2';
+            parentVerifyMsg.style.color = '#dc2626';
+            parentVerifyMsg.style.border = '1px solid #fecaca';
+            parentVerifyMsg.innerText = 'Please enter both your Admission/Application ID and phone number.';
+            return;
+          }
+
+          parentVerifyBtn.disabled = true;
+          parentVerifyBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Verifying records...';
+          UIComponents.refreshIcons();
+          parentVerifyMsg.style.display = 'none';
+
+          const client = dbService.getClient();
+          try {
+            const { data, error } = await client.rpc('tms_verify_parent_identity', {
+              p_identifier: ident,
+              p_phone: phone
+            });
+
+            if (error || !data || !data.success) {
+              parentVerifyBtn.disabled = false;
+              parentVerifyBtn.innerHTML = '<i data-lucide="shield-check"></i> Verify Student Details';
+              UIComponents.refreshIcons();
+              parentVerifyMsg.style.display = 'block';
+              parentVerifyMsg.style.background = '#fef2f2';
+              parentVerifyMsg.style.color = '#dc2626';
+              parentVerifyMsg.style.border = '1px solid #fecaca';
+              parentVerifyMsg.innerText = (data && data.error) || error?.message || 'Verification failed. Please check details.';
+              return;
+            }
+
+            verifiedParentData = data;
+            parentStep1.style.display = 'none';
+            parentStep2.style.display = 'block';
+
+            const card = document.getElementById('verified-student-card');
+            if (card) {
+              card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <span style="font-size:0.72rem; text-transform:uppercase; color:#166534; font-weight:700;">Verified Student Record</span>
+                    <h4 style="margin:2px 0; font-size:1rem; color:#14532d;">${UIComponents.escapeHtml(data.student_name)}</h4>
+                    <span style="font-size:0.78rem; color:var(--text-muted);">Grade: <strong>${UIComponents.escapeHtml(data.grade)}</strong> • Username: <code style="font-weight:700;">${UIComponents.escapeHtml(data.username)}</code></span>
+                  </div>
+                  <div style="width:34px; height:34px; border-radius:50%; background:#16a34a; color:white; display:flex; align-items:center; justify-content:center;">
+                    <i data-lucide="check" style="width:18px; height:18px;"></i>
+                  </div>
+                </div>
+              `;
+            }
+            UIComponents.refreshIcons();
+          } catch (err) {
+            parentVerifyBtn.disabled = false;
+            parentVerifyBtn.innerHTML = '<i data-lucide="shield-check"></i> Verify Student Details';
+            UIComponents.refreshIcons();
+            parentVerifyMsg.style.display = 'block';
+            parentVerifyMsg.style.background = '#fef2f2';
+            parentVerifyMsg.style.color = '#dc2626';
+            parentVerifyMsg.innerText = err.message || 'Verification error.';
+          }
+        });
+      }
+
+      // Password toggle buttons in step 2
+      const pp1 = document.getElementById('inp-parent-new-pass');
+      const pp2 = document.getElementById('inp-parent-conf-pass');
+      document.getElementById('btn-toggle-parent-p1')?.addEventListener('click', () => { pp1.type = pp1.type === 'password' ? 'text' : 'password'; });
+      document.getElementById('btn-toggle-parent-p2')?.addEventListener('click', () => { pp2.type = pp2.type === 'password' ? 'text' : 'password'; });
+
+      const parentSubmitReset = document.getElementById('btn-parent-submit-reset');
+      const parentResetMsg = document.getElementById('parent-reset-msg');
+
+      if (parentSubmitReset) {
+        parentSubmitReset.addEventListener('click', async () => {
+          const p1 = pp1?.value;
+          const p2 = pp2?.value;
+
+          if (!p1 || p1.length < 6) {
+            parentResetMsg.style.display = 'block';
+            parentResetMsg.style.background = '#fef2f2';
+            parentResetMsg.style.color = '#dc2626';
+            parentResetMsg.style.border = '1px solid #fecaca';
+            parentResetMsg.innerText = 'Password must be at least 6 characters.';
+            return;
+          }
+
+          if (p1 !== p2) {
+            parentResetMsg.style.display = 'block';
+            parentResetMsg.style.background = '#fef2f2';
+            parentResetMsg.style.color = '#dc2626';
+            parentResetMsg.style.border = '1px solid #fecaca';
+            parentResetMsg.innerText = 'Passwords do not match.';
+            return;
+          }
+
+          parentSubmitReset.disabled = true;
+          parentSubmitReset.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Updating password...';
+          UIComponents.refreshIcons();
+
+          const client = dbService.getClient();
+          try {
+            const { data, error } = await client.rpc('tms_self_reset_password', {
+              p_email: verifiedParentData.email,
+              p_new_password: p1
+            });
+
+            if (error) {
+              parentSubmitReset.disabled = false;
+              parentSubmitReset.innerHTML = '<i data-lucide="check-circle-2"></i> Update Password &amp; Ready to Login';
+              UIComponents.refreshIcons();
+              parentResetMsg.style.display = 'block';
+              parentResetMsg.style.background = '#fef2f2';
+              parentResetMsg.style.color = '#dc2626';
+              parentResetMsg.innerText = error.message || 'Failed to update password.';
+              return;
+            }
+
+            UIComponents.closeModal();
+            UIComponents.showToast('Password updated successfully! You can now log in.', 'success');
+
+            // Pre-fill login email/username and focus password
+            const loginEmailInput = document.getElementById('login-email');
+            const loginPassInput = document.getElementById('login-password');
+            if (loginEmailInput) loginEmailInput.value = verifiedParentData.username;
+            if (loginPassInput) {
+              loginPassInput.value = p1;
+              loginPassInput.focus();
+            }
+          } catch (err) {
+            parentSubmitReset.disabled = false;
+            parentSubmitReset.innerHTML = '<i data-lucide="check-circle-2"></i> Update Password &amp; Ready to Login';
+            UIComponents.refreshIcons();
+            parentResetMsg.style.display = 'block';
+            parentResetMsg.style.background = '#fef2f2';
+            parentResetMsg.style.color = '#dc2626';
+            parentResetMsg.innerText = err.message || 'Error updating password.';
+          }
+        });
+      }
+
+      // --- Staff Email Recovery Wiring with Countdown Timer ---
+      const identInput = document.getElementById('inp-forgot-ident');
+      const submitForgotBtn = document.getElementById('btn-submit-forgot');
+      const statusBox = document.getElementById('forgot-status-box');
+
+      submitForgotBtn?.addEventListener('click', async () => {
+        const ident = identInput.value.trim();
+        if (!ident) {
+          statusBox.style.display = 'block';
+          statusBox.style.background = '#fef2f2';
+          statusBox.style.color = '#dc2626';
+          statusBox.style.border = '1px solid #fecaca';
+          statusBox.innerHTML = '<i data-lucide="alert-circle"></i> Please enter your registered email or username.';
+          UIComponents.refreshIcons();
+          identInput.focus();
+          return;
+        }
+
+        submitForgotBtn.disabled = true;
+        submitForgotBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Dispatching secure link...';
+        UIComponents.refreshIcons();
+        statusBox.style.display = 'none';
+
+        const email = await resolveLoginEmail(ident);
+        const res = await authService.requestPasswordReset(email);
+
+        if (res.success) {
+          statusBox.style.display = 'block';
+          statusBox.style.background = '#f0fdf4';
+          statusBox.style.color = '#166534';
+          statusBox.style.border = '1px solid #86efac';
+          statusBox.innerHTML = `
+            <strong>✓ Reset Link Dispatched!</strong><br>
+            A secure recovery link has been sent to <strong>${UIComponents.escapeHtml(email)}</strong>.<br>
+            Please check your inbox (and spam/junk folder) and click the link to choose your new password.
+          `;
+          
+          let cooldown = 60;
+          submitForgotBtn.disabled = true;
+          const interval = setInterval(() => {
+            cooldown -= 1;
+            if (cooldown > 0) {
+              submitForgotBtn.innerText = `Resend in ${cooldown}s`;
+            } else {
+              clearInterval(interval);
+              submitForgotBtn.disabled = false;
+              submitForgotBtn.innerHTML = '<i data-lucide="send"></i> Resend Email Link';
+              UIComponents.refreshIcons();
+            }
+          }, 1000);
+        } else {
+          submitForgotBtn.disabled = false;
+          submitForgotBtn.innerHTML = '<i data-lucide="send"></i> Try Again';
+          statusBox.style.display = 'block';
+          statusBox.style.background = '#fef2f2';
+          statusBox.style.color = '#dc2626';
+          statusBox.style.border = '1px solid #fecaca';
+          statusBox.innerHTML = `<strong>Notice:</strong> ${UIComponents.escapeHtml(res.error || 'Please check your connection and try again.')}`;
+          UIComponents.refreshIcons();
+        }
+      });
+    });
+
+    // Check if user landed via Supabase Password Recovery link
+    function promptNewPasswordModal() {
+      UIComponents.openModal({
+        title: 'Create New Account Password',
+        bodyHtml: `
+          <div style="font-size:0.88rem; color:var(--text-muted); margin-bottom:14px;">
+            Enter your new secure password to complete your account recovery.
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password (minimum 6 characters) *</label>
+            <div style="position: relative;">
+              <input type="password" class="form-input font-mono" id="rec-new-pass" placeholder="••••••••••••" autofocus minlength="6" style="padding-right: 40px;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-p1" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); padding: 3px 8px; border: none; background: transparent;"><i data-lucide="eye"></i></button>
+            </div>
+            <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+              <div style="flex:1; height:4px; background:#e2e8f0; border-radius:2px; overflow:hidden;">
+                <div id="pass-strength-bar" style="width:0%; height:100%; transition:all 0.3s ease; background:#ef4444;"></div>
+              </div>
+              <span id="pass-strength-label" style="font-size:0.72rem; font-weight:600; color:var(--text-muted);">Enter password</span>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:10px;">
+            <label class="form-label">Confirm New Password *</label>
+            <div style="position: relative;">
+              <input type="password" class="form-input font-mono" id="rec-confirm-pass" placeholder="••••••••••••" minlength="6" style="padding-right: 40px;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-p2" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); padding: 3px 8px; border: none; background: transparent;"><i data-lucide="eye"></i></button>
+            </div>
+            <div id="pass-match-indicator" style="font-size:0.75rem; margin-top:4px; display:none;"></div>
+          </div>
+        `,
+        footerHtml: `
+          <button class="btn btn-secondary" onclick="document.getElementById('global-modal-close').click()">Cancel</button>
+          <button class="btn btn-primary" id="btn-save-new-pass"><i data-lucide="check"></i> Update Password</button>
+        `
+      });
+
+      const p1Inp = document.getElementById('rec-new-pass');
+      const p2Inp = document.getElementById('rec-confirm-pass');
+      const bar = document.getElementById('pass-strength-bar');
+      const label = document.getElementById('pass-strength-label');
+      const matchInd = document.getElementById('pass-match-indicator');
+
+      const updateStrength = () => {
+        const val = p1Inp.value;
+        if (!val) {
+          bar.style.width = '0%';
+          label.innerText = 'Enter password';
+          label.style.color = 'var(--text-muted)';
+          return;
+        }
+        let score = 0;
+        if (val.length >= 6) score += 1;
+        if (val.length >= 8) score += 1;
+        if (/[0-9]/.test(val) && /[A-Z]/.test(val)) score += 1;
+        if (/[^a-zA-Z0-9]/.test(val)) score += 1;
+
+        if (score <= 1) {
+          bar.style.width = '30%';
+          bar.style.background = '#ef4444';
+          label.innerText = 'Weak';
+          label.style.color = '#ef4444';
+        } else if (score <= 2) {
+          bar.style.width = '65%';
+          bar.style.background = '#f59e0b';
+          label.innerText = 'Good';
+          label.style.color = '#f59e0b';
+        } else {
+          bar.style.width = '100%';
+          bar.style.background = '#16a34a';
+          label.innerText = 'Strong';
+          label.style.color = '#16a34a';
+        }
+
+        if (p2Inp.value) {
+          matchInd.style.display = 'block';
+          if (val === p2Inp.value) {
+            matchInd.innerHTML = '<span style="color:#16a34a;"><i data-lucide="check"></i> Passwords match</span>';
+          } else {
+            matchInd.innerHTML = '<span style="color:#ef4444;">Passwords do not match</span>';
+          }
+          UIComponents.refreshIcons();
+        }
+      };
+
+      p1Inp?.addEventListener('input', updateStrength);
+      p2Inp?.addEventListener('input', updateStrength);
+
+      document.getElementById('btn-toggle-p1')?.addEventListener('click', () => {
+        p1Inp.type = p1Inp.type === 'password' ? 'text' : 'password';
+      });
+      document.getElementById('btn-toggle-p2')?.addEventListener('click', () => {
+        p2Inp.type = p2Inp.type === 'password' ? 'text' : 'password';
+      });
+
+      document.getElementById('btn-save-new-pass')?.addEventListener('click', async () => {
+        const p1 = p1Inp.value;
+        const p2 = p2Inp.value;
+        if (!p1 || p1.length < 6) {
+          UIComponents.showToast('Password must be at least 6 characters.', 'warning');
+          return;
+        }
+        if (p1 !== p2) {
+          UIComponents.showToast('Passwords do not match.', 'danger');
+          return;
+        }
+
+        const saveBtn = document.getElementById('btn-save-new-pass');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Updating...';
+        UIComponents.refreshIcons();
+
+        const res = await authService.changePassword(p1);
+        if (res.success) {
+          UIComponents.closeModal();
+          UIComponents.showToast('Password updated successfully! You can now sign in.', 'success');
+          window.history.replaceState(null, '', window.location.pathname);
+          const emailInput = document.getElementById('login-email');
+          const passInput = document.getElementById('login-password');
+          if (emailInput && authService.currentUser?.email) {
+            emailInput.value = authService.currentUser.email;
+          }
+          if (passInput) passInput.focus();
+        } else {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i data-lucide="check"></i> Update Password';
+          UIComponents.showToast(res.error || 'Failed to update password.', 'danger');
+          UIComponents.refreshIcons();
+        }
+      });
+      UIComponents.refreshIcons();
+    }
+
+    const client = dbService.getClient();
+    if (client && client.auth) {
+      client.auth.onAuthStateChange(async (event) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          promptNewPasswordModal();
+        }
+      });
+    }
+
+    if (window.location.hash.includes('type=recovery')) {
+      setTimeout(promptNewPasswordModal, 400);
+    }
+  </script>
+</body>
+</html>

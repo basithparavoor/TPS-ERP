@@ -1,0 +1,19 @@
+{
+  "name": "Thaiba Public School — ERP & Portal",
+  "short_name": "TPS ERP",
+  "description": "Institutional ERP, Admissions & Campus Management Suite for Thaiba Public School",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#BF9A33",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./tps-logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
